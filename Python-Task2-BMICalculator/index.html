@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BMI Studio — Interactive Body Mass Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Three-Zone Top Navigation Bar -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="#top" class="brand-title">BMI Studio</a>
+
+      <nav class="topbar-nav" aria-label="Primary">
+        <a href="#simulator-section">Simulator</a>
+        <a href="#capabilities-section">Capabilities</a>
+        <a href="#tracker-section">Tracker</a>
+        <a href="#reference-section">Categories</a>
+      </nav>
+
+      <div class="topbar-action">
+        <button type="button" id="focusInputBtn" class="btn btn-primary btn-sm">Open Tracker</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- Interactive Landing Hero Section -->
+    <section id="simulator-section" class="hero-section">
+      <div class="section-inner hero-grid">
+        <div class="hero-copy">
+          <p class="hero-kicker">Body Mass Analytics · Multi-User Local Storage</p>
+          <h1>Track body mass with <span class="headline-accent">healthy weight corridors.</span></h1>
+          <p class="hero-lead">
+            Calculate your exact BMI, inspect how far you sit from the Normal 18.5–24.9 corridor,
+            log multi-user measurements locally, and export your trend history to CSV without any server.
+          </p>
+
+          <div class="hero-actions">
+            <a href="#tracker-section" class="btn btn-primary">Start Tracking</a>
+            <a href="#capabilities-section" class="btn btn-secondary">Explore Features</a>
+          </div>
+
+          <dl class="hero-metrics">
+            <div>
+              <dt>Validation Bounds</dt>
+              <dd class="tabular-nums">10–300 kg · 0.5–2.5 m</dd>
+            </div>
+            <div>
+              <dt>Persistence</dt>
+              <dd>Multi-User LocalStorage</dd>
+            </div>
+            <div>
+              <dt>Data Portability</dt>
+              <dd>One-Click CSV Export</dd>
+            </div>
+          </dl>
+        </div>
+
+        <!-- Live Interactive BMI Spectrum Simulator -->
+        <div class="simulator-card" aria-labelledby="sim-heading">
+          <div class="panel-header">
+            <div>
+              <h2 id="sim-heading">Live BMI Spectrum Simulator</h2>
+              <p class="meta-text">Drag sliders or click a preset to preview your zone</p>
+            </div>
+            <span class="meta-text tabular-nums" id="simReadoutTag">22.04 BMI</span>
+          </div>
+
+          <!-- Interactive Preset Buttons -->
+          <div class="preset-bar" role="group" aria-label="Sample Body Presets">
+            <button type="button" class="preset-btn" data-w="49.0" data-h="1.68">Lean (49 kg)</button>
+            <button type="button" class="preset-btn active" data-w="63.7" data-h="1.70">Balanced (63.7 kg)</button>
+            <button type="button" class="preset-btn" data-w="81.0" data-h="1.72">Bulk (81 kg)</button>
+            <button type="button" class="preset-btn" data-w="98.0" data-h="1.70">High (98 kg)</button>
+          </div>
+
+          <!-- Dynamic Category-Colored Display Card -->
+          <div class="sim-display result-normal" id="simDisplayCard">
+            <div class="sim-value-block">
+              <span class="sim-bmi tabular-nums" id="simBmiValue">22.04</span>
+              <span class="sim-unit">kg/m²</span>
+            </div>
+            <div class="sim-category-text" id="simCategoryLabel">Normal (18.5 – 24.9)</div>
+            <div class="sim-corridor-text" id="simCorridorLabel">
+              Healthy weight for 1.70 m: 53.5 – 72.0 kg
+            </div>
+          </div>
+
+          <!-- 4-Zone Visual BMI Scale Gauge -->
+          <div class="gauge-wrapper" aria-label="BMI Spectrum Meter">
+            <div class="gauge-track">
+              <div class="gauge-seg seg-blue" title="Underweight (< 18.5)"></div>
+              <div class="gauge-seg seg-green" title="Normal (18.5 – 24.9)"></div>
+              <div class="gauge-seg seg-orange" title="Overweight (25.0 – 29.9)"></div>
+              <div class="gauge-seg seg-red" title="Obese (>= 30.0)"></div>
+              <div class="gauge-marker" id="simGaugeMarker" style="left: 33.5%;"></div>
+            </div>
+            <div class="gauge-labels tabular-nums">
+              <span>12</span>
+              <span>18.5</span>
+              <span>25.0</span>
+              <span>30.0</span>
+              <span>42+</span>
+            </div>
+          </div>
+
+          <div class="sim-sliders">
+            <div class="slider-group">
+              <div class="slider-label-row">
+                <label for="simWeightSlider">Weight</label>
+                <span class="tabular-nums slider-val" id="simWeightVal">63.7 kg</span>
+              </div>
+              <input
+                type="range"
+                id="simWeightSlider"
+                min="30"
+                max="160"
+                step="0.5"
+                value="63.7"
+              />
+            </div>
+
+            <div class="slider-group">
+              <div class="slider-label-row">
+                <label for="simHeightSlider">Height</label>
+                <span class="tabular-nums slider-val" id="simHeightVal">1.70 m</span>
+              </div>
+              <input
+                type="range"
+                id="simHeightSlider"
+                min="1.20"
+                max="2.20"
+                step="0.01"
+                value="1.70"
+              />
+            </div>
+          </div>
+
+          <button type="button" id="applySimulatorBtn" class="btn btn-primary btn-full">
+            Apply Values to Tracker
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Editorial Capabilities Section -->
+    <section id="capabilities-section" class="capabilities-section">
+      <div class="section-inner">
+        <div class="section-heading-row">
+          <h2>Built for accurate self-tracking</h2>
+          <p class="subtitle">
+            Every entry validates physical bounds, computes your Normal weight corridor, and plots progression against your personal Goal BMI.
+          </p>
+        </div>
+
+        <div class="capabilities-grid">
+          <article class="cap-card cap-teal">
+            <div class="cap-index idx-teal">01. Healthy Weight Corridor</div>
+            <h3>Know the exact weight range for your height</h3>
+            <p>
+              Instead of displaying a single isolated BMI score, each calculation computes your
+              Normal weight corridor (18.5×h² to 24.9×h²) and shows the exact kilogram delta to enter or maintain it.
+            </p>
+          </article>
+
+          <article class="cap-card cap-blue">
+            <div class="cap-index idx-blue">02. Multi-User Profiles</div>
+            <h3>Isolated history per person</h3>
+            <p>
+              Tag calculations under any username, switch profiles via the user dropdown, and clear or delete individual user histories with confirmation.
+            </p>
+          </article>
+
+          <article class="cap-card cap-emerald">
+            <div class="cap-index idx-emerald">03. Goal Line &amp; CSV Export</div>
+            <h3>Visual progression &amp; offline backup</h3>
+            <p>
+              Plot BMI against a customizable Goal BMI reference line in Chart.js and download any user's history as a clean CSV spreadsheet.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Interactive Tracker Workspace -->
+    <section id="tracker-section" class="tracker-section">
+      <div class="section-inner">
+        <div class="section-heading-row">
+          <h2>BMI Tracker Workspace</h2>
+          <p class="subtitle">
+            Log measurements in meters or centimeters, compare against your Goal BMI, and manage saved records.
+          </p>
+        </div>
+
+        <div id="storageErrorBanner" class="alert-banner alert-error hidden" role="alert"></div>
+
+        <div class="workspace-grid">
+          <!-- Left Column: Calculator Form & Color-Coded Result -->
+          <section id="calculator-section" class="panel" aria-labelledby="calc-heading">
+            <div class="panel-header">
+              <h3 id="calc-heading">Calculate &amp; Save Entry</h3>
+              <span class="meta-text">Metric · kg &amp; <span id="unitLabelTag">m</span></span>
+            </div>
+
+            <form id="bmiForm" novalidate>
+              <div class="form-group">
+                <label for="usernameInput">Username</label>
+                <input
+                  type="text"
+                  id="usernameInput"
+                  name="username"
+                  placeholder="e.g. Ayesha"
+                  autocomplete="off"
+                  required
+                />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="weightInput">Weight (kg)</label>
+                  <input
+                    type="number"
+                    id="weightInput"
+                    name="weight"
+                    placeholder="10 – 300"
+                    step="0.1"
+                    min="10"
+                    max="300"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <div class="label-with-toggle">
+                    <label for="heightInput" id="heightInputLabel">Height (m)</label>
+                    <div class="unit-toggle" role="group" aria-label="Height Unit">
+                      <button type="button" id="unitMeterBtn" class="unit-btn active">m</button>
+                      <button type="button" id="unitCmBtn" class="unit-btn">cm</button>
+                    </div>
+                  </div>
+                  <input
+                    type="number"
+                    id="heightInput"
+                    name="height"
+                    placeholder="0.5 – 2.5"
+                    step="0.01"
+                    min="0.5"
+                    max="2.5"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="goalBmiInput">Target Goal BMI (for trend chart)</label>
+                <input
+                  type="number"
+                  id="goalBmiInput"
+                  name="goalBmi"
+                  value="22.0"
+                  step="0.1"
+                  min="15"
+                  max="35"
+                />
+              </div>
+
+              <div id="formError" class="form-error hidden" role="alert"></div>
+
+              <div class="button-group">
+                <button type="submit" id="calculateBtn" class="btn btn-primary">Calculate</button>
+                <button type="button" id="clearBtn" class="btn btn-secondary">Clear</button>
+              </div>
+            </form>
+
+            <div id="resultCard" class="result-card result-neutral" aria-live="polite">
+              <div class="result-meta" id="resultMeta">Ready for calculation</div>
+              <div class="result-value-row">
+                <span class="result-bmi tabular-nums" id="resultBmi">--</span>
+                <span class="result-unit">kg/m²</span>
+              </div>
+              <div class="result-category" id="resultCategory">
+                Enter username, weight, and height to view your category.
+              </div>
+              <div class="result-guidance" id="resultGuidance">
+                Healthy weight corridor and target delta will appear here.
+              </div>
+            </div>
+
+            <!-- Interactive Clickable Category Reference Cards -->
+            <div id="reference-section" class="reference-box">
+              <div class="ref-header">
+                <h4>Interactive BMI Categories</h4>
+                <span class="meta-text">Click to preview</span>
+              </div>
+              <div class="category-cards">
+                <button type="button" class="cat-card cat-card-blue" data-cat="Underweight">
+                  <span class="cat-name">Underweight</span>
+                  <span class="cat-range tabular-nums">&lt; 18.5</span>
+                </button>
+                <button type="button" class="cat-card cat-card-green" data-cat="Normal">
+                  <span class="cat-name">Normal</span>
+                  <span class="cat-range tabular-nums">18.5 – 24.9</span>
+                </button>
+                <button type="button" class="cat-card cat-card-orange" data-cat="Overweight">
+                  <span class="cat-name">Overweight</span>
+                  <span class="cat-range tabular-nums">25.0 – 29.9</span>
+                </button>
+                <button type="button" class="cat-card cat-card-red" data-cat="Obese">
+                  <span class="cat-name">Obese</span>
+                  <span class="cat-range tabular-nums">&ge; 30.0</span>
+                </button>
+              </div>
+              <p id="categoryTipBox" class="cat-tip-box">
+                Click any category card above to jump the simulator and view tailored guidance.
+              </p>
+            </div>
+          </section>
+
+          <!-- Right Column: Multi-User Analytics, Trend Chart & History Table -->
+          <div class="right-column">
+            <section id="trend-section" class="panel" aria-labelledby="trend-heading">
+              <div class="panel-header panel-header-wrap">
+                <div>
+                  <h3 id="trend-heading">BMI Trend Over Time</h3>
+                  <p class="meta-text" id="selectedUserSummary">No user selected</p>
+                </div>
+
+                <div class="user-controls">
+                  <div class="select-wrapper">
+                    <label for="userSelect" class="sr-only">Select User</label>
+                    <select id="userSelect" aria-label="Select User">
+                      <option value="">No saved users</option>
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    id="loadSampleBtn"
+                    class="btn btn-secondary btn-sm"
+                  >
+                    Load Sample
+                  </button>
+                  <button
+                    type="button"
+                    id="exportCsvBtn"
+                    class="btn btn-secondary btn-sm"
+                    disabled
+                  >
+                    Export CSV
+                  </button>
+                  <button
+                    type="button"
+                    id="deleteRecordsBtn"
+                    class="btn btn-danger btn-sm"
+                    disabled
+                  >
+                    Delete my records
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Summary Strip for Selected User -->
+              <div class="summary-strip" id="userStatsStrip">
+                <div class="stat-cell stat-teal">
+                  <span class="stat-label">Latest BMI</span>
+                  <span class="stat-val tabular-nums" id="statLatestBmi">--</span>
+                </div>
+                <div class="stat-cell stat-blue">
+                  <span class="stat-label">Change Since First</span>
+                  <span class="stat-val tabular-nums" id="statDeltaBmi">--</span>
+                </div>
+                <div class="stat-cell stat-emerald">
+                  <span class="stat-label">Average BMI</span>
+                  <span class="stat-val tabular-nums" id="statAvgBmi">--</span>
+                </div>
+              </div>
+
+              <div class="chart-container" id="chartContainer">
+                <canvas id="bmiChart" aria-label="BMI Trend Line Chart"></canvas>
+                <div id="chartFallback" class="chart-fallback hidden"></div>
+              </div>
+            </section>
+
+            <section id="history-section" class="panel" aria-labelledby="history-heading">
+              <div class="panel-header">
+                <h3 id="history-heading">Saved History</h3>
+                <span class="meta-text tabular-nums" id="historyCount">0 records</span>
+              </div>
+
+              <div class="table-scroll">
+                <table class="history-table">
+                  <thead>
+                    <tr>
+                      <th>Date &amp; Time</th>
+                      <th class="num-col">Weight (kg)</th>
+                      <th class="num-col">Height (m)</th>
+                      <th class="num-col">BMI</th>
+                      <th>Category</th>
+                    </tr>
+                  </thead>
+                  <tbody id="historyTableBody">
+                    <tr>
+                      <td colspan="5" class="empty-cell">
+                        No records yet. Calculate a BMI entry to start tracking.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="section-inner footer-inner">
+      <div class="footer-brand">BMI Studio · Oasis Infobyte Internship Task 2</div>
+      <div class="footer-links">
+        <a href="#simulator-section">Simulator</a>
+        <a href="#capabilities-section">Capabilities</a>
+        <a href="#tracker-section">Tracker</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atmosphere — Interactive Weather Studio</title>
+  <meta name="description" content="Interactive weather landing page and live forecast studio powered by OpenWeatherMap and ipinfo.io." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&family=Outfit:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="theme-default">
+  <!-- Dynamic Atmospheric Background Layer -->
+  <div class="atmosphere-bg" aria-hidden="true">
+    <div class="atmosphere-orb orb-one"></div>
+    <div class="atmosphere-orb orb-two"></div>
+    <div class="atmosphere-particles" id="atmosphere-particles"></div>
+  </div>
+
+  <!-- 3-Zone Top Navigation Bar -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="#top" class="brand">Atmosphere</a>
+      <nav class="topnav" aria-label="Primary navigation">
+        <a href="#explorer">Explorer</a>
+        <a href="#forecast-section">Forecast</a>
+        <a href="#insights-section">Insights</a>
+        <a href="#compare-section">Compare</a>
+      </nav>
+      <div class="topbar-action">
+        <div class="unit-switch" role="group" aria-label="Temperature unit toggle">
+          <button type="button" id="btn-unit-c" class="unit-btn active" aria-pressed="true">°C</button>
+          <button type="button" id="btn-unit-f" class="unit-btn" aria-pressed="false">°F</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="top" class="page-shell">
+    <!-- Interactive Landing Hero & Search Console -->
+    <section id="explorer" class="hero-section">
+      <div class="hero-header">
+        <h1 class="hero-title">Live forecasts shaped by the sky above you.</h1>
+        <p class="hero-subtitle">
+          Search any city or ZIP code, auto-detect your location, toggle Celsius and Fahrenheit
+          without extra network calls, and explore daylight arcs, wind compasses, and smart outfit guidance.
+        </p>
+      </div>
+
+      <!-- Search Controls -->
+      <div class="search-panel">
+        <form id="search-form" class="search-form" novalidate>
+          <label for="city-input" class="sr-only">City name or ZIP code</label>
+          <div class="input-wrapper">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.3-4.3"></path>
+            </svg>
+            <input
+              type="text"
+              id="city-input"
+              placeholder="Enter city name or ZIP (e.g., Tokyo, London, 10001,US)..."
+              autocomplete="off"
+            />
+          </div>
+          <button type="submit" id="search-btn" class="btn-primary">Get Weather</button>
+          <button type="button" id="locate-btn" class="btn-secondary">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M12 2v3m0 14v3M2 12h3m14 0h3"></path>
+              <circle cx="12" cy="12" r="5"></circle>
+            </svg>
+            <span>Use my location</span>
+          </button>
+        </form>
+
+        <!-- Quick Destinations & Recent Searches -->
+        <div class="quick-row">
+          <div class="quick-group">
+            <span class="quick-label">Quick destinations:</span>
+            <div class="quick-buttons" id="quick-cities">
+              <button type="button" class="quick-btn" data-city="Tokyo">Tokyo</button>
+              <button type="button" class="quick-btn" data-city="London">London</button>
+              <button type="button" class="quick-btn" data-city="New York">New York</button>
+              <button type="button" class="quick-btn" data-city="Mumbai">Mumbai</button>
+              <button type="button" class="quick-btn" data-city="Reykjavik">Reykjavik</button>
+              <button type="button" class="quick-btn" data-city="Paris">Paris</button>
+            </div>
+          </div>
+          <div class="quick-group hidden" id="recent-group">
+            <span class="quick-label">Recent:</span>
+            <div class="quick-buttons" id="recent-cities"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Red On-Page Error Message Box -->
+      <div id="error-box" class="error-box hidden" role="alert" aria-live="assertive">
+        <div class="error-text-wrap">
+          <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div>
+            <strong>Unable to complete request:</strong>
+            <span id="error-message"></span>
+          </div>
+        </div>
+        <button type="button" id="error-close" class="error-close" aria-label="Dismiss error">Dismiss</button>
+      </div>
+
+      <!-- Loading Spinner -->
+      <div id="loading-box" class="loading-box hidden" role="status" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <span id="loading-text">Fetching live weather and forecast...</span>
+      </div>
+
+      <!-- Interactive Atmosphere & Sample Preview Bar -->
+      <div id="landing-showcase" class="landing-showcase">
+        <div class="mood-bar">
+          <span class="mood-label">Sample Cities — instant preview without API call:</span>
+          <div class="mood-controls" id="sample-city-controls" role="group" aria-label="Sample city snapshots">
+            <button type="button" class="mood-btn active" data-sample="Tokyo">Tokyo · 19°C</button>
+            <button type="button" class="mood-btn" data-sample="London">London · 11°C</button>
+            <button type="button" class="mood-btn" data-sample="Reykjavik">Reykjavik · -2°C</button>
+            <button type="button" class="mood-btn" data-sample="Mumbai">Mumbai · 32°C</button>
+          </div>
+        </div>
+
+        <div class="mood-bar">
+          <span class="mood-label">Interactive Sky Preview — experience live condition palettes:</span>
+          <div class="mood-controls" role="group" aria-label="Weather atmosphere preview">
+            <button type="button" class="mood-btn active" data-theme="theme-default">Azure Horizon</button>
+            <button type="button" class="mood-btn" data-theme="theme-clear">Sunlit Amber</button>
+            <button type="button" class="mood-btn" data-theme="theme-rain">Coastal Rain</button>
+            <button type="button" class="mood-btn" data-theme="theme-storm">Midnight Storm</button>
+            <button type="button" class="mood-btn" data-theme="theme-snow">Alpine Frost</button>
+            <button type="button" class="mood-btn" data-theme="theme-sunset">Golden Dusk</button>
+          </div>
+        </div>
+
+        <div class="landing-grid">
+          <article class="feature-card">
+            <span class="feature-index">01. Dual-Scale &amp; Zero-Refetch</span>
+            <h2>Instant °C / °F Switching</h2>
+            <p>
+              Both Celsius and Fahrenheit display simultaneously, and toggling the active scale
+              re-renders every hourly, daily, and comparison panel directly from memory.
+            </p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-index">02. Solar &amp; Wind Telemetry</span>
+            <h2>Daylight Arc &amp; Wind Compass</h2>
+            <p>
+              Track the sun's live path from sunrise to sunset in each city's local timezone,
+              alongside a directional wind compass and Beaufort intensity rating.
+            </p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-index">03. Smart Advisory &amp; Compare</span>
+            <h2>Outfit Guide &amp; City Pinboard</h2>
+            <p>
+              Get practical clothing and umbrella recommendations tailored to live conditions,
+              and pin up to three cities to compare their weather side by side.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Live Weather Dashboard (Populated After Search) -->
+    <section id="weather-dashboard" class="dashboard hidden" aria-live="polite">
+      <!-- Current Weather Hero Card -->
+      <div class="current-card">
+        <div class="current-main">
+          <div class="current-location-col">
+            <div class="location-meta">
+              <span id="local-time-label">Local time</span>
+              <span aria-hidden="true">·</span>
+              <span id="coords-label">Coordinates</span>
+            </div>
+            <h2 id="city-title" class="city-title">—</h2>
+            <p id="condition-desc" class="condition-desc">—</p>
+
+            <div class="temp-display-row">
+              <span id="primary-temp" class="primary-temp tabular-nums">--°</span>
+              <div class="temp-secondary-stack">
+                <span id="alt-temp" class="alt-temp tabular-nums">--°</span>
+                <span id="feels-like" class="feels-like tabular-nums">Feels like --°</span>
+              </div>
+            </div>
+
+            <div class="hero-actions-row">
+              <span id="minmax-today" class="minmax-today tabular-nums">Low --° · High --°</span>
+              <button type="button" id="pin-compare-btn" class="btn-outline">Pin to Compare</button>
+            </div>
+          </div>
+
+          <div class="current-icon-col">
+            <div class="weather-icon-stage" id="current-icon-wrap">
+              <img id="current-icon" src="" alt="" referrerpolicy="no-referrer" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Core Metric Tiles -->
+        <div class="metrics-grid">
+          <div class="metric-tile">
+            <span class="metric-label">Humidity</span>
+            <strong id="metric-humidity" class="metric-value tabular-nums">--%</strong>
+            <span id="metric-dewpoint" class="metric-sub tabular-nums">Dew point --°</span>
+          </div>
+          <div class="metric-tile">
+            <span class="metric-label">Wind Speed</span>
+            <strong id="metric-wind" class="metric-value tabular-nums">-- m/s</strong>
+            <span id="metric-wind-sub" class="metric-sub tabular-nums">-- km/h</span>
+          </div>
+          <div class="metric-tile">
+            <span class="metric-label">Pressure</span>
+            <strong id="metric-pressure" class="metric-value tabular-nums">-- hPa</strong>
+            <span id="metric-clouds" class="metric-sub tabular-nums">Cloud cover --%</span>
+          </div>
+          <div class="metric-tile">
+            <span class="metric-label">Visibility</span>
+            <strong id="metric-visibility" class="metric-value tabular-nums">-- km</strong>
+            <span id="metric-comfort" class="metric-sub">Comfort: --</span>
+          </div>
+        </div>
+
+        <!-- Smart Outfit & Activity Advisory -->
+        <div class="advisory-bar">
+          <div class="advisory-title">Smart Outfit &amp; Activity Advisory</div>
+          <p id="advisory-text" class="advisory-text">—</p>
+        </div>
+      </div>
+
+      <!-- Forecasts Section -->
+      <div id="forecast-section" class="forecast-grid-layout">
+        <!-- Hourly Forecast Panel -->
+        <section class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title" id="hourly-heading">Hourly Forecast — Next 6 Hours</h3>
+              <p class="panel-subtitle" id="hourly-sub">3-hour forecast intervals</p>
+            </div>
+            <div class="segmented-control" role="group" aria-label="Hourly forecast range">
+              <button type="button" id="hourly-mode-6" class="seg-btn active" aria-pressed="true">Next 6h</button>
+              <button type="button" id="hourly-mode-18" class="seg-btn" aria-pressed="false">Next 18h</button>
+            </div>
+          </div>
+
+          <div id="hourly-sparkline-wrap" class="sparkline-wrap" aria-hidden="true"></div>
+          <div id="hourly-list" class="hourly-list"></div>
+        </section>
+
+        <!-- 5-Day Forecast Panel -->
+        <section class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">5-Day Forecast</h3>
+              <p class="panel-subtitle">Grouped by local date · min / max temperatures</p>
+            </div>
+          </div>
+          <div id="daily-list" class="daily-list"></div>
+        </section>
+      </div>
+
+      <!-- Unique Interactive Insights Row: Sun Arc & Wind Compass -->
+      <section id="insights-section" class="insights-grid">
+        <article class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Solar Trajectory &amp; Daylight</h3>
+              <p class="panel-subtitle" id="daylight-duration">Daylight span</p>
+            </div>
+          </div>
+          <div class="sun-arc-container">
+            <svg id="sun-arc-svg" viewBox="0 0 320 150" class="sun-arc-svg" role="img" aria-label="Sunrise to sunset solar arc"></svg>
+            <div class="sun-times-row">
+              <div>
+                <span class="metric-label">Sunrise</span>
+                <strong id="sunrise-time" class="tabular-nums">--:--</strong>
+              </div>
+              <div class="sun-center-stat">
+                <span class="metric-label">Daylight Progress</span>
+                <strong id="daylight-pct" class="tabular-nums">--%</strong>
+              </div>
+              <div class="sun-right-stat">
+                <span class="metric-label">Sunset</span>
+                <strong id="sunset-time" class="tabular-nums">--:--</strong>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Wind Compass &amp; Air Profile</h3>
+              <p class="panel-subtitle" id="beaufort-label">Beaufort scale</p>
+            </div>
+          </div>
+          <div class="compass-layout">
+            <svg id="wind-compass-svg" viewBox="0 0 180 180" class="wind-compass-svg" role="img" aria-label="Wind direction compass"></svg>
+            <div class="compass-stats">
+              <div class="compass-stat-row">
+                <span>Direction</span>
+                <strong id="compass-dir" class="tabular-nums">—</strong>
+              </div>
+              <div class="compass-stat-row">
+                <span>Speed</span>
+                <strong id="compass-speed" class="tabular-nums">—</strong>
+              </div>
+              <div class="compass-stat-row">
+                <span>Gusts</span>
+                <strong id="compass-gust" class="tabular-nums">—</strong>
+              </div>
+              <div class="compass-stat-row">
+                <span>Thermal Comfort</span>
+                <strong id="compass-comfort">—</strong>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <!-- Side-by-Side City Comparison Pinboard -->
+      <section id="compare-section" class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h3 class="panel-title">Pinned Cities Comparison</h3>
+            <p class="panel-subtitle">Pin up to 3 cities to compare conditions side by side (updates with °C / °F)</p>
+          </div>
+          <button type="button" id="clear-compare-btn" class="btn-text hidden">Clear all</button>
+        </div>
+        <div id="compare-empty" class="compare-empty">
+          Click <strong>Pin to Compare</strong> on any searched city to compare temperatures, humidity, and wind side by side.
+        </div>
+        <div id="compare-grid" class="compare-grid hidden"></div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>Atmosphere Weather Studio · Oasis Infobyte Internship (Task 4)</span>
+      <span>Powered by OpenWeatherMap &amp; ipinfo.io</span>
+    </div>
+  </footer>
+
+  <!-- Load config.js first so API_KEY is available under file:// -->
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CipherForge — Cryptographic Random Password Generator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Three-zone Top Navigation Bar -->
+  <header class="top-bar">
+    <div class="top-bar-inner">
+      <a href="#top" class="brand-mark">CipherForge</a>
+      <nav class="top-nav" aria-label="Primary navigation">
+        <a href="#generator" class="nav-link">Generator</a>
+        <a href="#entropy-lab" class="nav-link">Strength Lab</a>
+        <a href="#sample-audits" class="nav-link">Sample Audits</a>
+      </nav>
+      <a href="#generator" class="nav-cta" id="header-generate-cta">Generate Now</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- Vibrant Editorial Hero Section -->
+    <section class="hero-section">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="hero-kicker">Oasis Infobyte Task 3 · Client-Side CSPRNG</p>
+          <h1 class="hero-title">Unpredictable passwords forged directly in browser memory.</h1>
+          <p class="hero-lead">
+            Powered by <code>crypto.getRandomValues()</code> with rejection sampling, guaranteed character-class diversity, live bit-entropy analysis, and zero disk or localStorage persistence.
+          </p>
+          <div class="hero-actions">
+            <a href="#generator" class="btn-hero-primary">Launch Generator</a>
+            <a href="#entropy-lab" class="btn-hero-secondary">Test a Password</a>
+          </div>
+          <dl class="hero-metrics">
+            <div class="metric-item">
+              <dt>Random Source</dt>
+              <dd>CSPRNG</dd>
+            </div>
+            <div class="metric-item">
+              <dt>Length Range</dt>
+              <dd class="tabular">8–64 chars</dd>
+            </div>
+            <div class="metric-item">
+              <dt>Persistence</dt>
+              <dd>RAM Only</dd>
+            </div>
+          </dl>
+        </div>
+
+        <!-- Interactive Live Preview Card in Hero -->
+        <aside class="hero-visual-panel" aria-label="Live entropy highlight">
+          <div class="visual-panel-header">
+            <span class="visual-panel-title">Live Pool Telemetry</span>
+            <span class="visual-panel-note" id="hero-mode-label">Random Mode</span>
+          </div>
+          <div class="visual-sample-box">
+            <span class="sample-caption">Current Output Preview</span>
+            <div class="visual-password-preview" id="hero-preview-chars" aria-live="polite">
+              Click Generate to forge
+            </div>
+          </div>
+          <div class="visual-stats-grid">
+            <div class="visual-stat">
+              <span class="stat-label">Entropy</span>
+              <span class="stat-value tabular" id="hero-entropy-bits">0.0 bits</span>
+            </div>
+            <div class="visual-stat">
+              <span class="stat-label">Estimated Crack Time</span>
+              <span class="stat-value tabular" id="hero-crack-time">—</span>
+            </div>
+          </div>
+          <div class="legend-row" aria-label="Character color legend">
+            <span class="legend-item"><span class="swatch swatch-upper"></span>Uppercase</span>
+            <span class="legend-item"><span class="swatch swatch-lower"></span>Lowercase</span>
+            <span class="legend-item"><span class="swatch swatch-digit"></span>Numbers</span>
+            <span class="legend-item"><span class="swatch swatch-symbol"></span>Symbols</span>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Primary Interactive Password Generator Section -->
+    <section id="generator" class="section-block">
+      <div class="container">
+        <div class="section-heading-row">
+          <div>
+            <h2 class="section-title">01. Interactive Password Studio</h2>
+            <p class="section-subtitle">
+              Switch between custom character passwords and memorable passphrases, inspect character anatomy, and copy in one click.
+            </p>
+          </div>
+          <div class="mode-switch" role="tablist" aria-label="Generation mode">
+            <button type="button" role="tab" aria-selected="true" id="tab-random" class="mode-tab is-active">
+              Random Password
+            </button>
+            <button type="button" role="tab" aria-selected="false" id="tab-passphrase" class="mode-tab">
+              Memorable Passphrase
+            </button>
+          </div>
+        </div>
+
+        <div class="workspace-grid">
+          <!-- Left Configuration Panel -->
+          <div class="panel">
+            <!-- Quick Presets -->
+            <div class="panel-section">
+              <div class="field-header">
+                <span class="field-label">Quick Presets</span>
+                <span class="hint-inline">One-click configuration</span>
+              </div>
+              <div class="preset-row">
+                <button type="button" class="preset-btn" data-preset="standard">Standard (12)</button>
+                <button type="button" class="preset-btn" data-preset="strong">Vault (20)</button>
+                <button type="button" class="preset-btn" data-preset="readable">No Ambiguous (16)</button>
+                <button type="button" class="preset-btn" data-preset="max">Max Key (32)</button>
+              </div>
+            </div>
+
+            <hr class="divider" />
+
+            <!-- Random Password Controls -->
+            <div id="random-controls">
+              <div class="panel-section">
+                <div class="field-header">
+                  <label for="length-slider" class="field-label">Password Length</label>
+                  <div class="length-readout-wrap">
+                    <input
+                      id="length-number"
+                      type="number"
+                      min="8"
+                      max="64"
+                      value="12"
+                      class="length-input"
+                      aria-label="Password length number"
+                    />
+                    <span class="length-unit">chars</span>
+                  </div>
+                </div>
+
+                <input
+                  id="length-slider"
+                  type="range"
+                  min="8"
+                  max="64"
+                  value="12"
+                  class="range-slider"
+                />
+                <div class="range-bounds" aria-hidden="true">
+                  <span>8 min</span>
+                  <span>36 mid</span>
+                  <span>64 max</span>
+                </div>
+              </div>
+
+              <hr class="divider" />
+
+              <div class="panel-section">
+                <p class="field-label">Character Types <span class="hint-inline">(at least 2 required)</span></p>
+                <div class="checkbox-grid">
+                  <label class="checkbox-item">
+                    <input type="checkbox" id="opt-upper" checked />
+                    <span>Uppercase <span class="char-sample">A–Z</span></span>
+                  </label>
+                  <label class="checkbox-item">
+                    <input type="checkbox" id="opt-lower" checked />
+                    <span>Lowercase <span class="char-sample">a–z</span></span>
+                  </label>
+                  <label class="checkbox-item">
+                    <input type="checkbox" id="opt-numbers" checked />
+                    <span>Numbers <span class="char-sample">0–9</span></span>
+                  </label>
+                  <label class="checkbox-item">
+                    <input type="checkbox" id="opt-symbols" checked />
+                    <span>Symbols <span class="char-sample">!@#$</span></span>
+                  </label>
+                </div>
+              </div>
+
+              <hr class="divider" />
+
+              <div class="panel-section">
+                <label class="checkbox-item checkbox-full">
+                  <input type="checkbox" id="opt-exclude-ambiguous" />
+                  <span>Exclude ambiguous characters <span class="char-sample">(0, O, o, l, 1, I)</span></span>
+                </label>
+
+                <div class="custom-exclude-wrap">
+                  <label for="custom-exclude-input" class="custom-exclude-label">
+                    Custom characters to exclude <span class="hint-inline">(optional)</span>
+                  </label>
+                  <input
+                    id="custom-exclude-input"
+                    type="text"
+                    placeholder="e.g. &quot; ' \ space"
+                    class="text-input"
+                    maxlength="32"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Passphrase Controls (shown when Passphrase tab active) -->
+            <div id="passphrase-controls" hidden>
+              <div class="panel-section">
+                <div class="field-header">
+                  <label for="word-count-slider" class="field-label">Word Count</label>
+                  <div class="length-readout-wrap">
+                    <span id="word-count-readout" class="length-badge tabular">4</span>
+                    <span class="length-unit">words</span>
+                  </div>
+                </div>
+                <input
+                  id="word-count-slider"
+                  type="range"
+                  min="3"
+                  max="8"
+                  value="4"
+                  class="range-slider"
+                />
+                <div class="range-bounds" aria-hidden="true">
+                  <span>3 min</span>
+                  <span>8 max</span>
+                </div>
+              </div>
+
+              <hr class="divider" />
+
+              <div class="panel-section">
+                <label for="separator-select" class="field-label">Word Separator</label>
+                <select id="separator-select" class="select-input">
+                  <option value="-">Hyphen ( - )</option>
+                  <option value=".">Period ( . )</option>
+                  <option value="_">Underscore ( _ )</option>
+                  <option value=" ">Space (   )</option>
+                </select>
+              </div>
+
+              <hr class="divider" />
+
+              <div class="panel-section">
+                <div class="checkbox-grid">
+                  <label class="checkbox-item">
+                    <input type="checkbox" id="opt-capitalize-words" checked />
+                    <span>Capitalize Words</span>
+                  </label>
+                  <label class="checkbox-item">
+                    <input type="checkbox" id="opt-append-number" checked />
+                    <span>Append Secure Digit</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div id="error-banner" class="error-banner" role="alert" hidden></div>
+
+            <div class="action-row">
+              <button type="button" id="generate-btn" class="btn-primary">
+                Generate Password
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Output, Anatomy, Strength & History Panel -->
+          <div class="panel">
+            <div class="panel-section">
+              <div class="field-header">
+                <label for="password-output" class="field-label">Generated Output</label>
+                <span id="copy-status" class="copy-status" role="status" aria-live="polite"></span>
+              </div>
+
+              <div class="output-group">
+                <input
+                  id="password-output"
+                  type="text"
+                  readonly
+                  placeholder="Click Generate Password"
+                  class="password-field"
+                  aria-label="Generated password"
+                />
+                <button type="button" id="toggle-visibility-btn" class="btn-secondary">
+                  Hide
+                </button>
+                <button type="button" id="copy-btn" class="btn-secondary">
+                  Copy
+                </button>
+              </div>
+
+              <!-- Color-coded Character Anatomy Strip -->
+              <div class="anatomy-box" aria-label="Color-coded character breakdown">
+                <div class="anatomy-header">
+                  <span>Character Anatomy</span>
+                  <span id="anatomy-counts" class="tabular">Ready</span>
+                </div>
+                <div id="anatomy-tokens" class="anatomy-tokens">
+                  <span class="anatomy-placeholder">Characters will appear color-coded by type after generation.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel-section strength-section">
+              <div class="field-header">
+                <span class="field-label">Strength &amp; Entropy</span>
+                <div class="strength-readout">
+                  <span id="entropy-readout" class="entropy-readout tabular">0.0 bits</span>
+                  <span aria-hidden="true">·</span>
+                  <span id="strength-label" class="strength-label">None</span>
+                </div>
+              </div>
+              <div class="strength-track" aria-hidden="true">
+                <div id="strength-bar" class="strength-bar"></div>
+              </div>
+              <p class="crack-estimate-line">
+                Offline brute-force estimate (10B guesses/sec): <strong id="crack-time-text" class="tabular">—</strong>
+              </p>
+            </div>
+
+            <hr class="divider" />
+
+            <div class="panel-section">
+              <div class="field-header">
+                <h3 class="field-label">Recent Passwords</h3>
+                <div class="history-actions">
+                  <span class="hint-inline">Last 5 · Memory only</span>
+                  <button type="button" id="clear-history-btn" class="btn-text-link">Clear</button>
+                </div>
+              </div>
+              <ul id="history-list" class="history-list">
+                <li class="history-empty">No passwords generated yet in this session.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Unique Interactive Feature: Live Password Strength Sandbox -->
+    <section id="entropy-lab" class="section-block section-tinted">
+      <div class="container">
+        <div class="section-heading-row">
+          <div>
+            <h2 class="section-title">02. Interactive Password Strength Lab</h2>
+            <p class="section-subtitle">
+              Audit any password in volatile memory to inspect its strength score, missing character classes, and estimated crack resistance.
+            </p>
+          </div>
+        </div>
+
+        <div class="lab-card">
+          <div class="lab-input-col">
+            <label for="audit-input" class="field-label">Test Any Password (never stored or transmitted)</label>
+            <div class="output-group">
+              <input
+                id="audit-input"
+                type="password"
+                placeholder="Type a password to test its resilience..."
+                class="text-input audit-field"
+              />
+              <button type="button" id="audit-toggle-btn" class="btn-secondary">Show</button>
+            </div>
+
+            <div class="strength-track" aria-hidden="true">
+              <div id="audit-bar" class="strength-bar"></div>
+            </div>
+            <div class="field-header">
+              <span class="crack-estimate-line">
+                Strength: <strong id="audit-strength-label">None</strong>
+              </span>
+              <span class="crack-estimate-line tabular">
+                <strong id="audit-entropy">0.0 bits</strong> · <strong id="audit-crack-time">—</strong>
+              </span>
+            </div>
+          </div>
+
+          <div class="lab-checklist" aria-label="Password quality checks">
+            <div class="check-row" id="chk-len">At least 12 characters</div>
+            <div class="check-row" id="chk-upper">Contains Uppercase (A–Z)</div>
+            <div class="check-row" id="chk-lower">Contains Lowercase (a–z)</div>
+            <div class="check-row" id="chk-digit">Contains Number (0–9)</div>
+            <div class="check-row" id="chk-symbol">Contains Symbol (!@#$...)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Sample Password Benchmarks (Dummy Data) -->
+    <section id="sample-audits" class="section-block">
+      <div class="container">
+        <div class="section-heading-row">
+          <div>
+            <h2 class="section-title">03. Sample Password Benchmarks</h2>
+            <p class="section-subtitle">
+              Illustrative sample passwords across common security tiers. Click any sample to load and evaluate it inside the Strength Lab above.
+            </p>
+          </div>
+        </div>
+
+        <div class="benchmark-card">
+          <div class="benchmark-table-wrap">
+            <table class="benchmark-table">
+              <thead>
+                <tr>
+                  <th>Scenario</th>
+                  <th>Sample Password</th>
+                  <th class="num-col">Length</th>
+                  <th class="num-col">Entropy</th>
+                  <th>Crack Estimate</th>
+                  <th>Rating</th>
+                  <th class="action-col">Action</th>
+                </tr>
+              </thead>
+              <tbody id="sample-benchmarks-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span class="footer-brand">CipherForge · Oasis Infobyte Internship Task 3</span>
+      <span class="footer-note">CSPRNG Password Generator · In-Memory Session Only</span>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

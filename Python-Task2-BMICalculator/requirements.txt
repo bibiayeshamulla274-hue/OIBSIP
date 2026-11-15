@@ -1,0 +1,3 @@
+# Python 3 standard library includes tkinter and sqlite3.
+# External dependency for BMI trend visualization:
+matplotlib>=3.7.0
